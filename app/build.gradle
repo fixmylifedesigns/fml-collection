@@ -1,0 +1,56 @@
+plugins {
+    id "com.android.application"
+}
+
+// CI passes -PversionCode=<run number>; each GitHub release is tagged v<versionCode>,
+// which is what the in-app updater compares against.
+def vCode = (project.findProperty("versionCode") ?: "1").toString().toInteger()
+def vName = (project.findProperty("versionName") ?: "1.0-dev").toString()
+
+android {
+    namespace "com.fixmylife.collection"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.fixmylife.collection"
+        minSdk 29
+        targetSdk 34
+        versionCode vCode
+        versionName vName
+        buildConfigField "String", "UPDATE_REPO", '"fixmylifedesigns/fml-collection"'
+        buildConfigField "String", "SITE", '"https://www.fixmylifeco.com"'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // One fixed key (app/release.keystore.b64, decoded by CI) so every release
+    // installs over the previous one and the in-app updater works.
+    signingConfigs {
+        release {
+            storeFile file("release.keystore")
+            storePassword "urIBKZ2EnmXnFUci"
+            keyAlias "fml"
+            keyPassword "urIBKZ2EnmXnFUci"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    // Lint's Play Store target-SDK rule isn't relevant for a sideloaded app; don't let it block builds.
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
